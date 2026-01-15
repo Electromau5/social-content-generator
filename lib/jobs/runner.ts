@@ -503,12 +503,20 @@ export async function enqueueJob(
     },
   });
 
-  // Process the job immediately in the background (don't await)
-  // This ensures jobs are processed right away instead of waiting for the daily cron
+  // Process jobs immediately - must await in serverless environments
+  // otherwise the function terminates before jobs complete
   if (options?.processImmediately !== false) {
-    runWorker().catch((error) => {
-      console.error('Background worker error:', error);
-    });
+    try {
+      // Run worker multiple times to process the full pipeline
+      // (extract -> chunk -> etc.)
+      let hasMoreJobs = true;
+      while (hasMoreJobs) {
+        const result = await runWorker();
+        hasMoreJobs = result.processed > 0;
+      }
+    } catch (error) {
+      console.error('Worker error:', error);
+    }
   }
 
   return job;
