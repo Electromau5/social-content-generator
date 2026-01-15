@@ -58,10 +58,10 @@ export function ExportButtons({ runId }: ExportButtonsProps) {
     setLoading(true);
     const result = await exportRunAsCSV(runId);
 
-    if (result.error) {
+    if (result.error || !result.data) {
       toast({
         title: 'Export failed',
-        description: result.error,
+        description: result.error || 'No data returned',
         variant: 'destructive',
       });
       setLoading(false);

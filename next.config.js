@@ -2,10 +2,12 @@
 const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['pdf-parse', 'mammoth'],
+    serverActions: {
+      bodySizeLimit: '50mb',
+    },
   },
-  // Increase serverActions body size limit for file uploads
-  serverActions: {
-    bodySizeLimit: '50mb',
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 };
 

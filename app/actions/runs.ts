@@ -67,22 +67,22 @@ export async function exportRunAsJSON(runId: string) {
       carousels: instagram
         .filter((p) => p.instagramType === 'carousel')
         .map((p) => ({
-          ...p.payload,
+          ...(p.payload as Record<string, unknown>),
           citations: p.citations,
         })),
       singles: instagram
         .filter((p) => p.instagramType === 'single')
         .map((p) => ({
-          ...p.payload,
+          ...(p.payload as Record<string, unknown>),
           citations: p.citations,
         })),
     },
     twitter: twitter.map((p) => ({
-      ...p.payload,
+      ...(p.payload as Record<string, unknown>),
       citations: p.citations,
     })),
     linkedin: linkedin.map((p) => ({
-      ...p.payload,
+      ...(p.payload as Record<string, unknown>),
       citations: p.citations,
     })),
   };
