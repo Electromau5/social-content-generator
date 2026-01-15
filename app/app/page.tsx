@@ -4,6 +4,9 @@ import prisma from '@/lib/db/prisma';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
+// Prevent static generation - this page needs database access at runtime
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const user = await requireAuth();
 

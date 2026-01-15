@@ -8,11 +8,8 @@ export default function Home() {
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold">Social Content Generator</h1>
           <nav className="flex gap-4">
-            <Link href="/auth/signin">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button>Get Started</Button>
+            <Link href="/app">
+              <Button>Go to App</Button>
             </Link>
           </nav>
         </div>
@@ -28,13 +25,8 @@ export default function Home() {
             platform-optimized content for Instagram, Twitter/X, and LinkedIn.
           </p>
           <div className="flex gap-4 justify-center">
-            <Link href="/auth/signup">
+            <Link href="/app">
               <Button size="lg">Start Creating</Button>
-            </Link>
-            <Link href="/auth/signin">
-              <Button size="lg" variant="outline">
-                Sign In
-              </Button>
             </Link>
           </div>
         </div>

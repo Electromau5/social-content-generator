@@ -1,20 +1,11 @@
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getSession } from '@/lib/auth/session';
 import { Button } from '@/components/ui/button';
-import { SignOutButton } from './sign-out-button';
 
 export default async function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
-
-  if (!session) {
-    redirect('/auth/signin');
-  }
-
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b bg-background sticky top-0 z-50">
@@ -38,9 +29,8 @@ export default async function AppLayout({
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              {session.user.email}
+              Test Mode
             </span>
-            <SignOutButton />
           </div>
         </div>
       </header>

@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateProjectDialog } from './create-project-dialog';
 
+// Prevent static generation - this page needs database access at runtime
+export const dynamic = 'force-dynamic';
+
 export default async function ProjectsPage() {
   const user = await requireAuth();
 
