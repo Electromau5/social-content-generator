@@ -1,0 +1,223 @@
+// Prisma schema for Social Content Generator
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String?
+  passwordHash   String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  projects       Project[]
+  rateLimitState RateLimitState?
+}
+
+model RateLimitState {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokens        Int      @default(100)
+  lastRefill    DateTime @default(now())
+  maxTokens     Int      @default(100)
+  refillRate    Int      @default(10) // tokens per minute
+}
+
+model Project {
+  id              String          @id @default(cuid())
+  name            String
+  description     String?
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  sources         Source[]
+  contextProfile  ContextProfile?
+  generationRuns  GenerationRun[]
+  jobs            Job[]
+
+  @@index([userId])
+}
+
+enum SourceType {
+  file
+  url
+}
+
+enum SourceStatus {
+  uploaded
+  extracting
+  extracted
+  chunking
+  chunked
+  profiling
+  profiled
+  failed
+}
+
+model Source {
+  id             String       @id @default(cuid())
+  projectId      String
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type           SourceType
+  mimeType       String?
+  originalName   String?
+  url            String?
+  fileBytes      Bytes?
+  extractedText  String?      @db.Text
+  transcriptText String?      @db.Text
+  status         SourceStatus @default(uploaded)
+  errorMessage   String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  chunks         SourceChunk[]
+
+  @@index([projectId])
+}
+
+model SourceChunk {
+  id          String   @id @default(cuid())
+  sourceId    String
+  source      Source   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  chunkIndex  Int
+  content     String   @db.Text
+  hash        String
+  headings    String[] @default([])
+  keywords    String[] @default([])
+  createdAt   DateTime @default(now())
+
+  @@unique([sourceId, chunkIndex])
+  @@index([sourceId])
+}
+
+model ContextProfile {
+  id         String   @id @default(cuid())
+  projectId  String   @unique
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  audience   String?  @db.Text
+  tone       String?  @db.Text
+  themes     Json?    // string[]
+  keyClaims  Json?    // { claim: string, chunkIds: string[], quote: string }[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+enum GenerationStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum TonePreset {
+  professional
+  casual
+  inspirational
+}
+
+enum StrictnessLevel {
+  strict
+  moderate
+  loose
+}
+
+enum HashtagDensity {
+  low
+  medium
+  high
+}
+
+model GenerationRun {
+  id              String           @id @default(cuid())
+  projectId       String
+  project         Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tonePreset      TonePreset       @default(professional)
+  strictness      StrictnessLevel  @default(moderate)
+  hashtagDensity  HashtagDensity   @default(medium)
+  status          GenerationStatus @default(pending)
+  errorMessage    String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  posts           GeneratedPost[]
+
+  @@index([projectId])
+}
+
+enum Platform {
+  instagram
+  twitter
+  linkedin
+}
+
+enum InstagramPostType {
+  carousel
+  single
+}
+
+model GeneratedPost {
+  id               String            @id @default(cuid())
+  generationRunId  String
+  generationRun    GenerationRun     @relation(fields: [generationRunId], references: [id], onDelete: Cascade)
+  platform         Platform
+  instagramType    InstagramPostType?
+  payload          Json              // platform-specific content
+  citations        Json              // { chunkId: string, quote: string }[]
+  createdAt        DateTime          @default(now())
+
+  @@index([generationRunId])
+}
+
+enum JobType {
+  extract_text
+  chunk_text
+  build_profile
+  generate_posts
+}
+
+enum JobStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model Job {
+  id          String    @id @default(cuid())
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  sourceId    String?   // For source-specific jobs
+  runId       String?   // For generation jobs
+  type        JobType
+  status      JobStatus @default(pending)
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3)
+  nextRunAt   DateTime  @default(now())
+  lockedAt    DateTime?
+  lockedBy    String?
+  errorMessage String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  logs        JobLog[]
+
+  @@index([projectId])
+  @@index([status, nextRunAt])
+}
+
+model JobLog {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  level     String   // info, warn, error
+  message   String   @db.Text
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([jobId])
+}
