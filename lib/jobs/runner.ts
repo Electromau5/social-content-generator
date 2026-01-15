@@ -483,16 +483,17 @@ export async function runWorker(): Promise<{ processed: number; errors: number }
   return { processed, errors };
 }
 
-// Helper to enqueue a new job
+// Helper to enqueue a new job and optionally process it immediately
 export async function enqueueJob(
   projectId: string,
   type: JobType,
   options?: {
     sourceId?: string;
     runId?: string;
+    processImmediately?: boolean;
   }
 ) {
-  return prisma.job.create({
+  const job = await prisma.job.create({
     data: {
       projectId,
       type,
@@ -501,4 +502,14 @@ export async function enqueueJob(
       status: JobStatus.pending,
     },
   });
+
+  // Process the job immediately in the background (don't await)
+  // This ensures jobs are processed right away instead of waiting for the daily cron
+  if (options?.processImmediately !== false) {
+    runWorker().catch((error) => {
+      console.error('Background worker error:', error);
+    });
+  }
+
+  return job;
 }
